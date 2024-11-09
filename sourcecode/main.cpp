@@ -3,6 +3,10 @@
 #include <SFML/Window.hpp>
 #include <SFML/System.hpp>
 #include <iostream>
+<<<<<<< HEAD
+=======
+#include <cmath>
+>>>>>>> a49d4a4427e7bc0b22c8b09d2cb7706bde024777
 
 // ---------------- Main Function ----------------
 enum GameState {
@@ -62,6 +66,19 @@ int main() {
     player2.setFillColor(sf::Color::Red);
     player2.setPosition(650.0f, 450.0f);
 
+<<<<<<< HEAD
+=======
+    sf::CircleShape ball(20.0f);
+    ball.setFillColor(sf::Color::White);
+    ball.setPosition(390.0f, 290.0f);
+
+    // Physics Variables
+    sf::Vector2f ballVelocity(0.0f, 0.0f);
+    const float gravity = 0.5f;
+    const float friction = 0.98f; // Slow down ball movement slightly
+    const float bounce = -0.7f;   // Ball loses some energy on bounce
+
+>>>>>>> a49d4a4427e7bc0b22c8b09d2cb7706bde024777
     // Main game loop
     while (window.isOpen()) {
         sf::Event event;
@@ -85,9 +102,39 @@ int main() {
             }
         }
 
+<<<<<<< HEAD
         // Render based on game state
         window.clear(sf::Color::Black);
 
+=======
+        if (currentGameState == Playing) {
+            // Ball Physics
+            ballVelocity.y += gravity; // Gravity affects the ball
+
+            // Move the ball
+            ball.move(ballVelocity);
+
+            // Ball Collision with ground
+            if (ball.getPosition().y + ball.getRadius() * 2 >= 600) {
+                ball.setPosition(ball.getPosition().x, 600 - ball.getRadius() * 2); // Reset to ground
+                ballVelocity.y *= bounce; // Reverse and reduce vertical velocity
+                ballVelocity.x *= friction; // Apply horizontal friction
+            }
+
+            // Ball Collision with walls
+            if (ball.getPosition().x <= 0 || ball.getPosition().x + ball.getRadius() * 2 >= 800) {
+                ballVelocity.x *= -1; // Reverse horizontal velocity
+                if (ball.getPosition().x <= 0)
+                    ball.setPosition(0, ball.getPosition().y);
+                if (ball.getPosition().x + ball.getRadius() * 2 >= 800)
+                    ball.setPosition(800 - ball.getRadius() * 2, ball.getPosition().y);
+            }
+        }
+
+        // Render based on game state
+        window.clear(sf::Color::Black);
+
+>>>>>>> a49d4a4427e7bc0b22c8b09d2cb7706bde024777
         if (currentGameState == MainMenu) {
             // Render Main Menu
             window.draw(titleText);
@@ -99,6 +146,10 @@ int main() {
             window.draw(field);
             window.draw(player1);
             window.draw(player2);
+<<<<<<< HEAD
+=======
+            window.draw(ball);
+>>>>>>> a49d4a4427e7bc0b22c8b09d2cb7706bde024777
         }
 
         window.display();
