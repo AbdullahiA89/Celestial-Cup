@@ -1,50 +1,106 @@
+// ---------------- Includes ----------------
 #include <SFML/Graphics.hpp>
 #include <SFML/Window.hpp>
 #include <SFML/System.hpp>
+#include <iostream>
+
+// ---------------- Main Function ----------------
+enum GameState {
+    MainMenu,
+    Playing
+};
 
 int main() {
-    // Create a 1080p window with a frame rate limit of 60 FPS
-    sf::RenderWindow window(sf::VideoMode(1920, 1080), "Celestial Cup", sf::Style::Close | sf::Style::Resize);
+    // Create a window
+    sf::RenderWindow window(sf::VideoMode(800, 600), "Celestial Cup");
     window.setFramerateLimit(60);
 
-    // Field (Rectangle) - Covers the entire window as the football field
-    sf::RectangleShape field(sf::Vector2f(1920.0f, 1080.0f));
-    field.setFillColor(sf::Color(50, 150, 50)); // Green color for grass
+    // Load font for menu text
+    sf::Font font;
+    if (!font.loadFromFile("bin/debug/res/Pixelify_Sans/PixelifySans-VariableFont_wght.ttf")) {
+        std::cerr << "Failed to load font!" << std::endl;
+        return -1;
+    }
 
-    // Player 1 (Blue Rectangle) - Positioned on the left side
-    sf::RectangleShape player1(sf::Vector2f(50.0f, 100.0f)); // Width = 50, Height = 100
+    // Main Menu Text Elements
+    sf::Text titleText, startText, quitText;
+
+    // Title
+    titleText.setFont(font);
+    titleText.setString("Celestial Cup");
+    titleText.setCharacterSize(50);
+    titleText.setFillColor(sf::Color::White);
+    titleText.setPosition(400 - titleText.getGlobalBounds().width / 2, 100);
+
+    // Start Game Option
+    startText.setFont(font);
+    startText.setString("Start Game");
+    startText.setCharacterSize(30);
+    startText.setFillColor(sf::Color::White);
+    startText.setPosition(400 - startText.getGlobalBounds().width / 2, 250);
+
+    // Quit Option
+    quitText.setFont(font);
+    quitText.setString("Quit");
+    quitText.setCharacterSize(30);
+    quitText.setFillColor(sf::Color::White);
+    quitText.setPosition(400 - quitText.getGlobalBounds().width / 2, 350);
+
+    // Game State
+    GameState currentGameState = MainMenu;
+
+    // Gameplay Elements
+    sf::RectangleShape field(sf::Vector2f(800.0f, 600.0f));
+    field.setFillColor(sf::Color(50, 150, 50)); // Green grass
+    field.setPosition(0, 0);
+
+    sf::RectangleShape player1(sf::Vector2f(50.0f, 100.0f));
     player1.setFillColor(sf::Color::Blue);
-    player1.setPosition(200.0f, 880.0f); // Near the left side of the field
+    player1.setPosition(100.0f, 450.0f);
 
-    // Player 2 (Red Rectangle) - Positioned on the right side
-    sf::RectangleShape player2(sf::Vector2f(50.0f, 100.0f)); // Width = 50, Height = 100
+    sf::RectangleShape player2(sf::Vector2f(50.0f, 100.0f));
     player2.setFillColor(sf::Color::Red);
-    player2.setPosition(1670.0f, 880.0f); // Near the right side of the field
+    player2.setPosition(650.0f, 450.0f);
 
-    // Ball (White Circle) - Centered on the field
-    sf::CircleShape ball(25.0f); // Radius = 25
-    ball.setFillColor(sf::Color::White);
-    ball.setPosition(945.0f, 880.0f); // Centered horizontally and vertically
-
-    // Game loop
+    // Main game loop
     while (window.isOpen()) {
         sf::Event event;
         while (window.pollEvent(event)) {
-            // Close the window when the user clicks "X"
-            if (event.type == sf::Event::Closed)
+            if (event.type == sf::Event::Closed) {
                 window.close();
+            }
+
+            // Handle main menu input
+            if (currentGameState == MainMenu) {
+                if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
+                    sf::Vector2i mousePos = sf::Mouse::getPosition(window);
+
+                    if (startText.getGlobalBounds().contains(static_cast<float>(mousePos.x), static_cast<float>(mousePos.y))) {
+                        currentGameState = Playing; // Transition to gameplay
+                    }
+                    else if (quitText.getGlobalBounds().contains(static_cast<float>(mousePos.x), static_cast<float>(mousePos.y))) {
+                        window.close();
+                    }
+                }
+            }
         }
 
-        // Clear the window with the default background color
-        window.clear();
+        // Render based on game state
+        window.clear(sf::Color::Black);
 
-        // Draw the field, players, and ball
-        window.draw(field);
-        window.draw(player1);
-        window.draw(player2);
-        window.draw(ball);
+        if (currentGameState == MainMenu) {
+            // Render Main Menu
+            window.draw(titleText);
+            window.draw(startText);
+            window.draw(quitText);
+        }
+        else if (currentGameState == Playing) {
+            // Render Gameplay Scene
+            window.draw(field);
+            window.draw(player1);
+            window.draw(player2);
+        }
 
-        // Display everything on the window
         window.display();
     }
 
