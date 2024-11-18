@@ -3,14 +3,7 @@
 #include <SFML/Window.hpp>
 #include <SFML/System.hpp>
 #include <iostream>
-<<<<<<< Updated upstream
-<<<<<<< HEAD
-=======
 #include <cmath>
->>>>>>> a49d4a4427e7bc0b22c8b09d2cb7706bde024777
-=======
-#include <cmath>
->>>>>>> Stashed changes
 
 // ---------------- Main Function ----------------
 enum GameState {
@@ -25,11 +18,7 @@ int main() {
 
     // Load font for menu text
     sf::Font font;
-<<<<<<< Updated upstream
-    if (!font.loadFromFile("bin/debug/res/Pixelify_Sans/PixelifySans-VariableFont_wght.ttf")) {
-=======
     if (!font.loadFromFile("bin/debug/res/font/Pixelify_Sans/PixelifySans-VariableFont_wght.ttf")) {
->>>>>>> Stashed changes
         std::cerr << "Failed to load font!" << std::endl;
         return -1;
     }
@@ -74,24 +63,10 @@ int main() {
     player2.setFillColor(sf::Color::Red);
     player2.setPosition(650.0f, 450.0f);
 
-<<<<<<< Updated upstream
-<<<<<<< HEAD
-=======
-=======
->>>>>>> Stashed changes
     sf::CircleShape ball(20.0f);
     ball.setFillColor(sf::Color::White);
     ball.setPosition(390.0f, 290.0f);
 
-<<<<<<< Updated upstream
-    // Physics Variables
-    sf::Vector2f ballVelocity(0.0f, 0.0f);
-    const float gravity = 0.5f;
-    const float friction = 0.98f; // Slow down ball movement slightly
-    const float bounce = -0.7f;   // Ball loses some energy on bounce
-
->>>>>>> a49d4a4427e7bc0b22c8b09d2cb7706bde024777
-=======
     // Goals
     sf::RectangleShape leftGoal(sf::Vector2f(50.0f, 200.0f));
     leftGoal.setFillColor(sf::Color(255, 255, 0, 100)); // Semi-transparent yellow
@@ -118,7 +93,14 @@ int main() {
     const float friction = 0.98f;
     const float bounce = -0.7f;
 
->>>>>>> Stashed changes
+    // Player Movement Variables
+    float player1VelocityY = 0.0f;
+    float player2VelocityY = 0.0f;
+    const float jumpStrength = -15.0f;
+
+    bool player1OnGround = true;
+    bool player2OnGround = true;
+
     // Main game loop
     while (window.isOpen()) {
         sf::Event event;
@@ -142,23 +124,6 @@ int main() {
             }
         }
 
-<<<<<<< Updated upstream
-<<<<<<< HEAD
-        // Render based on game state
-        window.clear(sf::Color::Black);
-
-=======
-        if (currentGameState == Playing) {
-            // Ball Physics
-            ballVelocity.y += gravity; // Gravity affects the ball
-
-            // Move the ball
-            ball.move(ballVelocity);
-
-            // Ball Collision with ground
-            if (ball.getPosition().y + ball.getRadius() * 2 >= 600) {
-                ball.setPosition(ball.getPosition().x, 600 - ball.getRadius() * 2); // Reset to ground
-=======
         if (currentGameState == Playing) {
             // Ball Physics
             ballVelocity.y += gravity; // Gravity affects the ball
@@ -167,7 +132,6 @@ int main() {
             // Ball Collision with ground
             if (ball.getPosition().y + ball.getRadius() * 2 >= 600) {
                 ball.setPosition(ball.getPosition().x, 600 - ball.getRadius() * 2);
->>>>>>> Stashed changes
                 ballVelocity.y *= bounce; // Reverse and reduce vertical velocity
                 ballVelocity.x *= friction; // Apply horizontal friction
             }
@@ -180,8 +144,6 @@ int main() {
                 if (ball.getPosition().x + ball.getRadius() * 2 >= 800)
                     ball.setPosition(800 - ball.getRadius() * 2, ball.getPosition().y);
             }
-<<<<<<< Updated upstream
-=======
 
             // Ball Collision with goals
             if (ball.getGlobalBounds().intersects(leftGoal.getGlobalBounds())) {
@@ -211,16 +173,41 @@ int main() {
             if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right) && player2.getPosition().x + player2.getSize().x < 800) {
                 player2.move(5.0f, 0);
             }
->>>>>>> Stashed changes
+
+            // Jumping
+            if (sf::Keyboard::isKeyPressed(sf::Keyboard::W) && player1OnGround) {
+                player1VelocityY = jumpStrength;
+                player1OnGround = false;
+            }
+            if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up) && player2OnGround) {
+                player2VelocityY = jumpStrength;
+                player2OnGround = false;
+            }
+
+            // Gravity for players
+            player1VelocityY += gravity;
+            player2VelocityY += gravity;
+
+            // Apply vertical movement
+            player1.move(0, player1VelocityY);
+            player2.move(0, player2VelocityY);
+
+            // Ground Collision for players
+            if (player1.getPosition().y + player1.getSize().y >= 450) {
+                player1.setPosition(player1.getPosition().x, 450 - player1.getSize().y);
+                player1VelocityY = 0;
+                player1OnGround = true;
+            }
+            if (player2.getPosition().y + player2.getSize().y >= 450) {
+                player2.setPosition(player2.getPosition().x, 450 - player2.getSize().y);
+                player2VelocityY = 0;
+                player2OnGround = true;
+            }
         }
 
         // Render based on game state
         window.clear(sf::Color::Black);
 
-<<<<<<< Updated upstream
->>>>>>> a49d4a4427e7bc0b22c8b09d2cb7706bde024777
-=======
->>>>>>> Stashed changes
         if (currentGameState == MainMenu) {
             // Render Main Menu
             window.draw(titleText);
@@ -230,21 +217,12 @@ int main() {
         else if (currentGameState == Playing) {
             // Render Gameplay Scene
             window.draw(field);
-<<<<<<< Updated upstream
-            window.draw(player1);
-            window.draw(player2);
-<<<<<<< HEAD
-=======
-            window.draw(ball);
->>>>>>> a49d4a4427e7bc0b22c8b09d2cb7706bde024777
-=======
             window.draw(leftGoal);
             window.draw(rightGoal);
             window.draw(player1);
             window.draw(player2);
             window.draw(ball);
             window.draw(scoreText);
->>>>>>> Stashed changes
         }
 
         window.display();
