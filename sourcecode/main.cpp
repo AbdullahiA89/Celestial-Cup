@@ -1,6 +1,7 @@
 #include <SFML/Graphics.hpp>
 #include <SFML/Window.hpp>
 #include <SFML/System.hpp>
+#include <iostream>
 #include <cmath> // For std::sin
 
 int main() {
@@ -59,7 +60,7 @@ int main() {
     sf::Vector2f ballVelocity(0.0f, 0.0f); // Ball's velocity (x, y)
     const float ballFriction = 0.70f; // Friction for slowing ball horizontally
     const float ballBounce = -0.7f; // Ball bounces with reduced velocity
-    const float kickStrength = 20.0f; // Strength of the kick
+    const float kickStrength = 10.0f; // Strength of the kick
 
     // ---------------- Goals ----------------
     sf::RectangleShape leftGoal(sf::Vector2f(50.0f, 200.0f));
@@ -96,6 +97,26 @@ int main() {
     bool player1Swinging = false;
     bool player2Swinging = false;
 
+
+    // ---------------- Load Textures ----------------
+    // Load Textures
+    sf::Texture backgroundTexture, ballTexture, leftGoalTexture, rightGoalTexture;
+    if (!backgroundTexture.loadFromFile("bin/debug/res/space.png") ||
+        !ballTexture.loadFromFile("bin/debug/res/ball.png") ||
+        !leftGoalTexture.loadFromFile("bin/debug/res/leftgoalpost.png") ||
+        !rightGoalTexture.loadFromFile("bin/debug/res/rightgoalpost.png")) {
+        std::cerr << "Failed to load one or more textures!" << std::endl;
+        return -1;
+    }
+
+    // Create Sprites
+    sf::Sprite backgroundSprite(backgroundTexture);
+    sf::Sprite ballSprite(ballTexture);
+    sf::Sprite leftGoalSprite(leftGoalTexture);
+    sf::Sprite rightGoalSprite(rightGoalTexture);
+
+    // Set background position
+    backgroundSprite.setPosition(0.0f, 0.0f); // Fullscreen background
     // ---------------- Main Game Loop ----------------
     while (window.isOpen()) {
         sf::Event event;
@@ -154,8 +175,17 @@ int main() {
             // Ball Collision with ground
             if (ball.getPosition().y + ball.getRadius() * 2 >= 880) {
                 ball.setPosition(ball.getPosition().x, 880 - ball.getRadius() * 2);
-                ballVelocity.y *= ballBounce; // Reverse and reduce vertical velocity
+                ballVelocity.y *= ballBounce; // Reverse and reduce vertical velocity for bounce
+
+                // Apply horizontal ground friction
+                ballVelocity.x *= ballFriction;
+
+                // Stop horizontal movement if velocity is very low
+                if (std::abs(ballVelocity.x) < 0.1f) {
+                    ballVelocity.x = 0.0f;
+                }
             }
+
 
             // Ball Collision with walls
             if (ball.getPosition().x <= 0 || ball.getPosition().x + ball.getRadius() * 2 >= 1920) {
@@ -209,6 +239,7 @@ int main() {
                 ballVelocity.x = -8.0f; // Push ball to the left
                 ballVelocity.y = jumpStrength / 2; // Add slight upward force
             }
+
 
             // ---------------- Dash Mechanics ----------------
             const float dashSpeed = 20.0f; // Speed of the dash
@@ -266,16 +297,16 @@ int main() {
             if (sf::Keyboard::isKeyPressed(sf::Keyboard::B)) {
                 player1Swinging = true;
                 player1SwingCharge += 2.0f; // Increment the charge gradually
-                player1SwingCharge = std::min(player1SwingCharge, 70.0f); // Cap the charge at a maximum angle
+                player1SwingCharge = std::min(player1SwingCharge, 180.0f); // Cap the charge at a maximum angle
                 player1FootAngle = player1SwingCharge; // Swing the foot backward behind the player
             }
             else if (player1Swinging) {
                 player1SwingSpeed += 2.0f; // Gradually increase the forward fling speed
                 player1FootAngle += player1SwingSpeed * 0.1f + 30.0f; // Swing the foot forward slower
-                if (player1FootAngle >= 70.0f) { // Reset once the forward motion is complete
+                if (player1FootAngle >= 0.0f) { // Reset once the forward motion is complete
                     player1SwingSpeed = 0.0f; // Reset speed
                     player1Swinging = false; // Stop swinging
-                    player1FootAngle = -45.0f; // Reset angle
+                    player1FootAngle = 15.0f; // Reset angle
                     if (player1Foot.getGlobalBounds().intersects(ball.getGlobalBounds())) {
                         ballVelocity.x += player1SwingCharge * 2.0f; // Apply horizontal force to the ball
                         ballVelocity.y -= player1SwingCharge * 1.0f; // Apply vertical force to the ball
@@ -290,17 +321,17 @@ int main() {
 
             if (sf::Keyboard::isKeyPressed(sf::Keyboard::P)) {
                 player2Swinging = true;
-                player2SwingCharge += 1.0f; // Increment the charge gradually
-                player2SwingCharge = std::min(player2SwingCharge, -70.0f); // Cap the charge at a maximum angle
+                player2SwingCharge += 2.0f; // Increment the charge gradually
+                player2SwingCharge = std::min(player2SwingCharge, -75.0f); // Cap the charge at a maximum angle
                 player2FootAngle = player2SwingCharge; // Swing the foot backward behind the player
             }
             else if (player2Swinging) {
                 player2SwingSpeed += 2.0f; // Gradually increase the forward fling speed
-                player2FootAngle -= player2SwingSpeed * 0.1f; // Swing the foot forward slower
+                player2FootAngle -= player2SwingSpeed * 0.1f - 30.0f; // Swing the foot forward slower
                 if (player2FootAngle <= 0.0f) { // Reset once the forward motion is complete
                     player2SwingSpeed = 0.0f; // Reset speed
                     player2Swinging = false; // Stop swinging
-                    player2FootAngle = 0.0f; // Reset angle
+                    player2FootAngle = 15.0f; // Reset angle
                     if (player2Foot.getGlobalBounds().intersects(ball.getGlobalBounds())) {
                         ballVelocity.x -= player2SwingCharge * 2.0f; // Apply horizontal force to the ball
                         ballVelocity.y += player2SwingCharge * 1.0f; // Apply vertical force to the ball
@@ -355,15 +386,17 @@ int main() {
         }
 
         // ---------------- Rendering ----------------
-        window.clear();
-        window.draw(field);
-        window.draw(leftGoal);
-        window.draw(rightGoal);
+        window.draw(backgroundSprite); // Draw background
+        leftGoalSprite.setPosition(leftGoal.getPosition()); // Sync sprite with physics object
+        window.draw(leftGoalSprite);
+        rightGoalSprite.setPosition(rightGoal.getPosition()); // Sync sprite with physics object
+        window.draw(rightGoalSprite);
+        ballSprite.setPosition(ball.getPosition()); // Sync sprite with physics object
+        window.draw(ballSprite);
         window.draw(player1);
         window.draw(player2);
         window.draw(player1Foot);
         window.draw(player2Foot);
-        window.draw(ball);
         window.display();
     }
 
