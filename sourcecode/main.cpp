@@ -34,11 +34,11 @@ int main() {
     player2.setPosition(player2StartPos);
 
     // Player 1 Foot
-    sf::RectangleShape player1Foot(sf::Vector2f(80.0f, 20.0f)); // Rectangular foot
+    sf::RectangleShape player1Foot(sf::Vector2f(140.0f, 20.0f)); // Rectangular foot
     player1Foot.setFillColor(sf::Color::Cyan);
 
     // Player 2 Foot
-    sf::RectangleShape player2Foot(sf::Vector2f(80.0f, 20.0f)); // Rectangular foot
+    sf::RectangleShape player2Foot(sf::Vector2f(140.0f, 20.0f)); // Rectangular foot
     player2Foot.setFillColor(sf::Color::Magenta);
 
     // Initialize Player 1's foot position
@@ -100,11 +100,15 @@ int main() {
 
     // ---------------- Load Textures ----------------
     // Load Textures
-    sf::Texture backgroundTexture, ballTexture, leftGoalTexture, rightGoalTexture;
-    if (!backgroundTexture.loadFromFile("bin/debug/res/space.png") ||
+    sf::Texture backgroundTexture, ballTexture, leftGoalTexture, rightGoalTexture, player1Texture, player2Texture, player1FootTexture, player2FootTexture;
+    if (!backgroundTexture.loadFromFile("bin/debug/res/Spacefinal.png") ||
         !ballTexture.loadFromFile("bin/debug/res/ball.png") ||
         !leftGoalTexture.loadFromFile("bin/debug/res/leftgoalpost.png") ||
-        !rightGoalTexture.loadFromFile("bin/debug/res/rightgoalpost.png")) {
+        !rightGoalTexture.loadFromFile("bin/debug/res/rightgoalpost.png") ||
+        !player1Texture.loadFromFile("bin/debug/res/Player1.png") ||
+        !player2Texture.loadFromFile("bin/debug/res/Player2.png") ||
+        !player1FootTexture.loadFromFile("bin/debug/res/player1shoe.png") ||
+        !player2FootTexture.loadFromFile("bin/debug/res/player2shoe.png")) {
         std::cerr << "Failed to load one or more textures!" << std::endl;
         return -1;
     }
@@ -114,6 +118,14 @@ int main() {
     sf::Sprite ballSprite(ballTexture);
     sf::Sprite leftGoalSprite(leftGoalTexture);
     sf::Sprite rightGoalSprite(rightGoalTexture);
+    sf::Sprite player1Sprite(player1Texture);
+    sf::Sprite player2Sprite(player2Texture);
+    sf::Sprite player1FootSprite(player1FootTexture);
+    sf::Sprite player2FootSprite(player2FootTexture);
+
+    // Adjust boot size
+    player1FootSprite.setScale(0.2f, 0.2f); // Adjust size for Player 1's boot
+    player2FootSprite.setScale(0.2f, 0.2f); // Adjust size for Player 2's boot
 
     // Set background position
     backgroundSprite.setPosition(0.0f, 0.0f); // Fullscreen background
@@ -217,17 +229,16 @@ int main() {
             sf::FloatRect player1FootBounds = player1Foot.getGlobalBounds();
             sf::FloatRect player2FootBounds = player2Foot.getGlobalBounds();
 
-            // Player 1 kicks the ball
             if (player1FootBounds.intersects(ballBounds) && player1Swinging) {
-                ballVelocity.x = kickStrength * std::cos(player1FootAngle * 3.14f / 180.0f); // Apply horizontal force based on foot angle
-                ballVelocity.y = kickStrength * std::sin(player1FootAngle * 3.14f / 180.0f); // Apply vertical force based on foot angle
+                ballVelocity.x = 15.0f * std::cos(player1FootAngle * 3.14f / 180.0f); // Apply horizontal force
+                ballVelocity.y = -10.0f; // Apply vertical force
             }
 
-            // Player 2 kicks the ball
             if (player2FootBounds.intersects(ballBounds) && player2Swinging) {
-                ballVelocity.x = -kickStrength * std::cos(player2FootAngle * 3.14f / 180.0f); // Negative for leftward direction
-                ballVelocity.y = -kickStrength * std::sin(player2FootAngle * 3.14f / 180.0f); // Negative for upward force
+                ballVelocity.x = -15.0f * std::cos(player2FootAngle * 3.14f / 180.0f); // Apply horizontal force
+                ballVelocity.y = -10.0f; // Apply vertical force
             }
+
 
             // Prevent players from moving through each other
             if (ballBounds.intersects(player1Bounds)) {
@@ -291,67 +302,64 @@ int main() {
 
             // ---------------- Swing Mechanics ----------------
             // Swing Player 1 Foot (B Key)
-            static float player1SwingCharge = 0.0f; // Charge for Player 1's foot swing
-            static float player1SwingSpeed = 0.0f;  // Speed for the fling-back motion
+            static float player1SwingCharge = 0.0f; // Charge for the swing
+            static float player1SwingSpeed = 0.0f;  // Speed for the forward motion
 
             if (sf::Keyboard::isKeyPressed(sf::Keyboard::B)) {
                 player1Swinging = true;
-                player1SwingCharge += 2.0f; // Increment the charge gradually
-                player1SwingCharge = std::min(player1SwingCharge, 180.0f); // Cap the charge at a maximum angle
-                player1FootAngle = player1SwingCharge; // Swing the foot backward behind the player
+                player1SwingCharge -= 5.0f; // Increase swing angle (negative for counter-clockwise)
+                player1SwingCharge = std::max(player1SwingCharge, -75.0f); // Limit backward swing
+                player1FootSprite.setRotation(player1SwingCharge); // Rotate backward
             }
             else if (player1Swinging) {
-                player1SwingSpeed += 2.0f; // Gradually increase the forward fling speed
-                player1FootAngle += player1SwingSpeed * 0.1f + 30.0f; // Swing the foot forward slower
-                if (player1FootAngle >= 0.0f) { // Reset once the forward motion is complete
-                    player1SwingSpeed = 0.0f; // Reset speed
-                    player1Swinging = false; // Stop swinging
-                    player1FootAngle = 15.0f; // Reset angle
-                    if (player1Foot.getGlobalBounds().intersects(ball.getGlobalBounds())) {
-                        ballVelocity.x += player1SwingCharge * 2.0f; // Apply horizontal force to the ball
-                        ballVelocity.y -= player1SwingCharge * 1.0f; // Apply vertical force to the ball
-                    }
-                    player1SwingCharge = 0.0f; // Reset charge after the kick
+                player1SwingSpeed += 5.0f; // Forward swing speed
+                player1SwingCharge += player1SwingSpeed * 0.1f + 5.0f; // Forward fling motion
+                player1FootSprite.setRotation(player1SwingCharge); // Rotate forward
+                if (player1SwingCharge >= 0.0f) { // Reset foot position
+                    player1SwingSpeed = 0.0f;
+                    player1Swinging = false;
+                    player1SwingCharge = 0.0f;
+                    player1FootSprite.setRotation(0.0f); // Reset rotation
                 }
             }
 
             // Swing Player 2 Foot (P Key)
-            static float player2SwingCharge = 0.0f; // Charge for Player 2's foot swing
-            static float player2SwingSpeed = 0.0f;  // Speed for the fling-back motion
+            static float player2SwingCharge = 0.0f; // Charge for the swing
+            static float player2SwingSpeed = 0.0f;  // Speed for the forward motion
 
             if (sf::Keyboard::isKeyPressed(sf::Keyboard::P)) {
                 player2Swinging = true;
-                player2SwingCharge += 2.0f; // Increment the charge gradually
-                player2SwingCharge = std::min(player2SwingCharge, -75.0f); // Cap the charge at a maximum angle
-                player2FootAngle = player2SwingCharge; // Swing the foot backward behind the player
+                player2SwingCharge += 5.0f; // Increase swing angle
+                player2SwingCharge = std::min(player2SwingCharge, 75.0f); // Limit backward swing
+                player2FootSprite.setRotation(player2SwingCharge); // Rotate forward
             }
             else if (player2Swinging) {
-                player2SwingSpeed += 2.0f; // Gradually increase the forward fling speed
-                player2FootAngle -= player2SwingSpeed * 0.1f - 30.0f; // Swing the foot forward slower
-                if (player2FootAngle <= 0.0f) { // Reset once the forward motion is complete
-                    player2SwingSpeed = 0.0f; // Reset speed
-                    player2Swinging = false; // Stop swinging
-                    player2FootAngle = 15.0f; // Reset angle
-                    if (player2Foot.getGlobalBounds().intersects(ball.getGlobalBounds())) {
-                        ballVelocity.x -= player2SwingCharge * 2.0f; // Apply horizontal force to the ball
-                        ballVelocity.y += player2SwingCharge * 1.0f; // Apply vertical force to the ball
-                    }
-                    player2SwingCharge = 0.0f; // Reset charge after the kick
+                player2SwingSpeed += 5.0f; // Forward swing speed
+                player2SwingCharge -= player2SwingSpeed * 0.1f + 5.0f; // Forward fling motion
+                player2FootSprite.setRotation(player2SwingCharge); // Rotate back
+                if (player2SwingCharge <= 0.0f) { // Reset foot position
+                    player2SwingSpeed = 0.0f;
+                    player2Swinging = false;
+                    player2SwingCharge = 0.0f;
+                    player2FootSprite.setRotation(0.0f); // Reset rotation
                 }
             }
 
 
+
+
             // Update Player 1's foot position and rotation
-            player1Foot.setOrigin(0, player1Foot.getSize().y / 2.0f); // Set origin to the left-middle of the foot
+            player1FootSprite.setOrigin(0, player1FootSprite.getLocalBounds().height / 2.0f);
             player1Foot.setRotation(player1FootAngle); // Apply the swing angle
-            player1Foot.setPosition(player1.getPosition().x + player1.getSize().x / 2.0f, player1.getPosition().y + player1.getSize().y); // Attach foot to bottom center of Player 1
+            player1Foot.setPosition(player1.getPosition().x + player1.getSize().x * 0.2f + 35.0f, player1.getPosition().y + player1.getSize().y); // Attach foot to bottom center of Player 1
 
-            // Update Player 2's foot position and rotation
-            player2Foot.setOrigin(player2Foot.getSize().x, player2Foot.getSize().y / 2.0f); // Set origin to the right-middle of the foot
+            // Update Player 2's foot position and rotation (Flipped to the left side of Player 2's body)
+            player2FootSprite.setOrigin(player2FootSprite.getLocalBounds().width, player2FootSprite.getLocalBounds().height / 2.0f);
             player2Foot.setRotation(player2FootAngle); // Apply the swing angle
-            player2Foot.setPosition(player2.getPosition().x + player2.getSize().x / 2.0f, player2.getPosition().y + player2.getSize().y); // Attach foot to bottom center of Player 2
-
-
+            player2Foot.setPosition(
+                player2.getPosition().x - player2Foot.getSize().x * 0.1f + 35.0f, // Align horizontally on the left side of Player 2
+                player2.getPosition().y + player2.getSize().y + 5.0f // Slightly above the bottom of Player 2's body
+            );
 
 
             // ---------------- Goal Check ----------------
@@ -392,11 +400,20 @@ int main() {
         rightGoalSprite.setPosition(rightGoal.getPosition()); // Sync sprite with physics object
         window.draw(rightGoalSprite);
         ballSprite.setPosition(ball.getPosition()); // Sync sprite with physics object
-        window.draw(ballSprite);
-        window.draw(player1);
-        window.draw(player2);
-        window.draw(player1Foot);
-        window.draw(player2Foot);
+        window.draw(ballSprite)
+            ;
+        player1Sprite.setPosition(player1.getPosition());
+        window.draw(player1Sprite);
+
+        player2Sprite.setPosition(player2.getPosition());
+        window.draw(player2Sprite);
+
+        player1FootSprite.setPosition(player1Foot.getPosition());
+        window.draw(player1FootSprite);
+
+        player2FootSprite.setPosition(player2Foot.getPosition());
+        window.draw(player2FootSprite);
+
         window.display();
     }
 
