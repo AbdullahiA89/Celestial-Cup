@@ -1,43 +1,144 @@
+// ---------------- Includes ----------------
 #include <SFML/Graphics.hpp>
 #include <SFML/Window.hpp>
 #include <SFML/System.hpp>
+#include <SFML/Audio.hpp>
+#include <vector>
 #include <iostream>
-#include <cmath> // For std::sin
+#include <cmath> 
 
+
+// ---------------- Main Function ----------------
+
+bool isFullscreen = false; // Tracks whether the game is in fullscreen mode
+sf::VideoMode currentResolution(1920, 1080); // Default resolution
+
+void toggleFullscreen(sf::RenderWindow& window, bool& isFullscreen);
+
+void toggleFullscreen(sf::RenderWindow& window, bool& isFullscreen) {
+    isFullscreen = !isFullscreen;
+
+    // Save the current view to preserve game state
+    sf::View currentView = window.getView();
+
+    // Recreate the window
+    if (isFullscreen) {
+        window.create(sf::VideoMode::getDesktopMode(), "Celestial Cup", sf::Style::Fullscreen);
+    }
+    else {
+        window.create(currentResolution, "Celestial Cup", sf::Style::Close | sf::Style::Resize);
+    }
+
+    // Apply the saved view
+    window.setView(currentView);
+}
+
+
+// ---------------- Main Function ----------------
 int main() {
     // ---------------- Initialize Window ----------------
     sf::RenderWindow window(sf::VideoMode(1920, 1080), "Celestial Cup", sf::Style::Close | sf::Style::Resize);
     window.setFramerateLimit(60);
 
+
+    // ---------------- Enums and State ----------------
     enum GameState {
         MainMenu,
-        Playing
+        Playing,
+        Settings
     };
     GameState currentGameState = MainMenu;
 
+    // Load Main Menu Background
+    sf::Texture mainMenuBgTexture;
+
+    // ---------------- Resource Loading ----------------
+    if (!mainMenuBgTexture.loadFromFile("bin/debug/res/mainmenubg.png")) {
+        std::cerr << "Failed to load main menu background!" << std::endl;
+        return -1;
+    }
+    sf::Sprite mainMenuBg(mainMenuBgTexture);
+    // Load Font
+    sf::Font font;
+    if (!font.loadFromFile("bin/debug/res/font/Pixelify_Sans/PixelifySans-VariableFont_wght.ttf")) {
+        std::cerr << "Failed to load font!" << std::endl;
+        return -1;
+    }
+
+
+    // Declare Main Menu Elements
+    sf::Text titleText, startText, settingsText, quitText;
+    sf::RectangleShape startBox, settingsBox, quitBox;
+
+    // Initialize Title Text
+    titleText.setFont(font);
+    titleText.setString("Celestial Cup");
+    titleText.setCharacterSize(100);
+    titleText.setFillColor(sf::Color::White);
+    titleText.setPosition(960 - titleText.getGlobalBounds().width / 2, 400);
+
+    // Initialize Menu Options
+    startText.setFont(font);
+    startText.setString("Start Game");
+    startText.setCharacterSize(40);
+    startText.setFillColor(sf::Color::White);
+
+    settingsText.setFont(font);
+    settingsText.setString("Settings");
+    settingsText.setCharacterSize(40);
+    settingsText.setFillColor(sf::Color::White);
+
+    quitText.setFont(font);
+    quitText.setString("Quit");
+    quitText.setCharacterSize(40);
+    quitText.setFillColor(sf::Color::White);
+
+    // Position Text Inside Boxes
+    startBox.setSize(sf::Vector2f(300, 70));
+    startBox.setFillColor(sf::Color(100, 100, 100, 200)); // Semi-transparent gray
+    startBox.setOutlineColor(sf::Color::White);
+    startBox.setOutlineThickness(2);
+    startBox.setPosition(810, 600); // Bottom middle
+    startText.setPosition(
+        startBox.getPosition().x + startBox.getSize().x / 2 - startText.getGlobalBounds().width / 2,
+        startBox.getPosition().y + startBox.getSize().y / 2 - startText.getGlobalBounds().height / 2);
+
+    settingsBox.setSize(sf::Vector2f(300, 70));
+    settingsBox.setFillColor(sf::Color(100, 100, 100, 200));
+    settingsBox.setOutlineColor(sf::Color::White);
+    settingsBox.setOutlineThickness(2);
+    settingsBox.setPosition(810, 700); // Below Start Game
+    settingsText.setPosition(
+        settingsBox.getPosition().x + settingsBox.getSize().x / 2 - settingsText.getGlobalBounds().width / 2,
+        settingsBox.getPosition().y + settingsBox.getSize().y / 2 - settingsText.getGlobalBounds().height / 2);
+
+    quitBox.setSize(sf::Vector2f(300, 70));
+    quitBox.setFillColor(sf::Color(100, 100, 100, 200));
+    quitBox.setOutlineColor(sf::Color::White);
+    quitBox.setOutlineThickness(2);
+    quitBox.setPosition(810, 800); // Below Settings
+    quitText.setPosition(
+        quitBox.getPosition().x + quitBox.getSize().x / 2 - quitText.getGlobalBounds().width / 2,
+        quitBox.getPosition().y + quitBox.getSize().y / 2 - quitText.getGlobalBounds().height / 2);
+
 
     // ---------------- Game Objects ----------------
-    // Field
     sf::RectangleShape field(sf::Vector2f(1920.0f, 1080.0f));
     field.setFillColor(sf::Color(50, 150, 50)); // Green grass
 
-    // Player 1
     sf::RectangleShape player1(sf::Vector2f(65.0f, 125.0f));
     player1.setFillColor(sf::Color::Blue);
     sf::Vector2f player1StartPos(200.0f, 880.0f);
     player1.setPosition(player1StartPos);
 
-    // Player 2
     sf::RectangleShape player2(sf::Vector2f(65.0f, 125.0f));
     player2.setFillColor(sf::Color::Red);
     sf::Vector2f player2StartPos(1670.0f, 880.0f);
     player2.setPosition(player2StartPos);
 
-    // Player 1 Foot
     sf::RectangleShape player1Foot(sf::Vector2f(140.0f, 20.0f)); // Rectangular foot
     player1Foot.setFillColor(sf::Color::Cyan);
 
-    // Player 2 Foot
     sf::RectangleShape player2Foot(sf::Vector2f(140.0f, 20.0f)); // Rectangular foot
     player2Foot.setFillColor(sf::Color::Magenta);
 
@@ -49,12 +150,48 @@ int main() {
     player2Foot.setOrigin(player2Foot.getSize().x / 2.0f, player2Foot.getSize().y / 2.0f); // Set origin to the center
     player2Foot.setPosition(player2StartPos.x + player2.getSize().x / 2.0f, player2StartPos.y + player2.getSize().y + 20.0f); // Position below Player 2
 
-
-    // Ball
     sf::CircleShape ball(25.0f);
     ball.setFillColor(sf::Color::White);
     sf::Vector2f ballStartPos(945.0f, 540.0f);
     ball.setPosition(ballStartPos);
+
+    // Define resolutions
+    std::vector<sf::Vector2u> resolutions = {
+        {1920, 1080}, // Full HD
+        {1600, 900},  // HD+
+        {1366, 768},  // WXGA
+        {1280, 720},  // HD
+        {1024, 576}   // SD
+    };
+
+    int currentResolutionIndex = 0; // Start with the first resolution
+
+    sf::Text resolutionText, resolutionLeftArrow, resolutionRightArrow, applyButton;
+
+    // Initialize UI
+    resolutionText.setFont(font);
+    resolutionText.setCharacterSize(40);
+    resolutionText.setFillColor(sf::Color::White);
+    resolutionText.setPosition(800, 300); // Center the resolution display
+
+    resolutionLeftArrow.setFont(font);
+    resolutionLeftArrow.setString("<");
+    resolutionLeftArrow.setCharacterSize(40);
+    resolutionLeftArrow.setFillColor(sf::Color::White);
+    resolutionLeftArrow.setPosition(750, 300); // Left arrow position
+
+    resolutionRightArrow.setFont(font);
+    resolutionRightArrow.setString(">");
+    resolutionRightArrow.setCharacterSize(40);
+    resolutionRightArrow.setFillColor(sf::Color::White);
+    resolutionRightArrow.setPosition(1000, 300); // Right arrow position
+
+    applyButton.setFont(font);
+    applyButton.setString("Apply");
+    applyButton.setCharacterSize(40);
+    applyButton.setFillColor(sf::Color::White);
+    applyButton.setPosition(850, 400); // Position for "Apply" button
+
 
     // ---------------- Physics Variables ----------------
     sf::Vector2f ballVelocity(0.0f, 0.0f); // Ball's velocity (x, y)
@@ -97,6 +234,9 @@ int main() {
     bool player1Swinging = false;
     bool player2Swinging = false;
 
+    bool player1CanDoubleJump = false; // Tracks if Player 1 can perform a double jump
+
+
 
     // ---------------- Load Textures ----------------
     // Load Textures
@@ -129,25 +269,422 @@ int main() {
 
     // Set background position
     backgroundSprite.setPosition(0.0f, 0.0f); // Fullscreen background
+
+    // Background music
+    sf::SoundBuffer bgMusicBuffer;
+    if (!bgMusicBuffer.loadFromFile("bin/debug/res/bgmusic.wav")) {
+        std::cerr << "Failed to load background music!" << std::endl;
+        return -1;
+    }
+    sf::Sound bgMusicSound(bgMusicBuffer);
+    bgMusicSound.setLoop(true); // Loop the background music
+    bgMusicSound.setVolume(50); // Adjust volume
+
+    // Low cheering sound
+    sf::SoundBuffer lowCheerBuffer;
+    if (!lowCheerBuffer.loadFromFile("bin/debug/res/lowcheer.wav")) {
+        std::cerr << "Failed to load low cheering sound!" << std::endl;
+        return -1;
+    }
+    sf::Sound lowCheerSound(lowCheerBuffer);
+    lowCheerSound.setLoop(true); // Loop the cheering sound
+    lowCheerSound.setVolume(30); // Adjust volume
+
+
+    // Whistle sound
+    sf::SoundBuffer whistleBuffer;
+    if (!whistleBuffer.loadFromFile("bin/debug/res/whistle sound game.wav")) {
+        std::cerr << "Failed to load whistle sound!" << std::endl;
+        return -1;
+    }
+    sf::Sound whistleSound(whistleBuffer);
+
+    // Victory music
+    sf::SoundBuffer victoryBuffer;
+    if (!victoryBuffer.loadFromFile("bin/debug/res/victorymusic.wav")) {
+        std::cerr << "Failed to load victory music!" << std::endl;
+        return -1;
+    }
+    sf::Sound victorySound(victoryBuffer);
+
+
+    sf::Text scoreboardText;
+
+    // Initialize the Scoreboard Text
+    scoreboardText.setFont(font);
+    scoreboardText.setCharacterSize(50); // Large font size for visibility
+    scoreboardText.setFillColor(sf::Color::White); // White text
+    scoreboardText.setOutlineColor(sf::Color::Black); // Black outline for contrast
+    scoreboardText.setOutlineThickness(3.0f); // Thick outline for visibility
+    scoreboardText.setString("Player 1: 0  -  Player 2: 0"); // Initial score
+    scoreboardText.setPosition(960 - scoreboardText.getGlobalBounds().width / 2, 20); // Centered at the top
+
+
+    // Player 1 Abilities
+    bool player1SpeedBoost = false;
+    sf::Clock player1SpeedBoostTimer;
+    sf::Text player1SpeedBoostText;
+
+    // Player 2 Abilities
+    bool player2GiantJuice = false;
+    sf::Clock player2GiantJuiceTimer;
+    sf::Text player2GiantJuiceText;
+
+    // Player 1 Speed Boost Text
+    player1SpeedBoostText.setFont(font);
+    player1SpeedBoostText.setCharacterSize(40);
+    player1SpeedBoostText.setFillColor(sf::Color::Black); // Text color
+    player1SpeedBoostText.setOutlineColor(sf::Color::Yellow); // Outline color
+    player1SpeedBoostText.setOutlineThickness(3.0f); // Outline thickness
+    player1SpeedBoostText.setPosition(50, 50); // Left side
+
+
+    // Player 2 Giant Juice Text
+    player2GiantJuiceText.setFont(font);
+    player2GiantJuiceText.setCharacterSize(40);
+    player2GiantJuiceText.setFillColor(sf::Color::Blue); // Text color
+    player2GiantJuiceText.setOutlineColor(sf::Color::Red); // Outline color
+    player2GiantJuiceText.setOutlineThickness(3.0f); // Outline thickness
+    player2GiantJuiceText.setPosition(1600, 50);
+
+
+    sf::Clock gameClock; // Clock to track the 2-minute timer
+    float gameDuration = 120.0f; // Total game duration in seconds (2 minutes)
+
+    // Game Over flag
+    bool isGameOver = false;
+    std::string winnerText;
+
+    // Victory Screen Text
+    sf::Text victoryText;
+
+    sf::RectangleShape mainMenuButton;
+
+    sf::Text mainMenuButtonText;
+    // Initialize Main Menu Button
+    mainMenuButton.setSize(sf::Vector2f(300, 70)); // Button size
+    mainMenuButton.setFillColor(sf::Color(100, 100, 100, 200)); // Semi-transparent gray
+    mainMenuButton.setOutlineColor(sf::Color::White); // White outline
+    mainMenuButton.setOutlineThickness(2.0f); // Outline thickness
+    mainMenuButton.setPosition(810, 850); // Center bottom
+
+    // Initialize Main Menu Button Text
+    mainMenuButtonText.setFont(font);
+    mainMenuButtonText.setString("Main Menu");
+    mainMenuButtonText.setCharacterSize(40); // Font size
+    mainMenuButtonText.setFillColor(sf::Color::White); // White text
+    mainMenuButtonText.setPosition(
+        mainMenuButton.getPosition().x + mainMenuButton.getSize().x / 2 - mainMenuButtonText.getGlobalBounds().width / 2,
+        mainMenuButton.getPosition().y + mainMenuButton.getSize().y / 2 - mainMenuButtonText.getGlobalBounds().height / 2
+    ); // Center text in button
+
+
+
+    // Initialize Victory Screen Text
+    victoryText.setFont(font);
+    victoryText.setCharacterSize(100); // Large size
+    victoryText.setFillColor(sf::Color::White); // White text
+    victoryText.setOutlineColor(sf::Color::Black); // Black outline
+    victoryText.setOutlineThickness(3.0f); // Thick outline for visibility
+    victoryText.setString(""); // Initially empty
+    victoryText.setPosition(960 - victoryText.getGlobalBounds().width / 2, 540 - victoryText.getGlobalBounds().height / 2); // Center
+
+
+    sf::Text settingsTitleText;
+    settingsTitleText.setFont(font);
+    settingsTitleText.setString("Settings");
+    settingsTitleText.setCharacterSize(80);
+    settingsTitleText.setFillColor(sf::Color::White);
+    settingsTitleText.setPosition(960 - settingsTitleText.getGlobalBounds().width / 2, 200);
+
+    sf::Text backButton;
+
+    // Initialize Back Button
+    backButton.setFont(font);
+    backButton.setString("Back to Main Menu");
+    backButton.setCharacterSize(40);
+    backButton.setFillColor(sf::Color::White);
+    backButton.setPosition(800, 500); // Position it appropriately in the Settings menu
+
+    bool isPaused = false; // Pause state
+
+    sf::Text resumeButton, pausemainMenuButton;
+
+    // Initialize Pause Menu Buttons
+    resumeButton.setFont(font);
+    resumeButton.setString("Resume");
+    resumeButton.setCharacterSize(50);
+    resumeButton.setFillColor(sf::Color::White);
+    resumeButton.setPosition(800, 400); // Adjust based on resolution
+
+    pausemainMenuButton.setFont(font);
+    pausemainMenuButton.setString("Main Menu");
+    pausemainMenuButton.setCharacterSize(50);
+    pausemainMenuButton.setFillColor(sf::Color::White);
+    pausemainMenuButton.setPosition(800, 500); // Adjust based on resolution
+
+    // Dynamic moving obstacle
+    sf::RectangleShape obstacle(sf::Vector2f(50.0f, 100.0f)); // Width: 100, Height: 20
+    obstacle.setPosition(960, 540); // Starting position in the center
+    obstacle.setFillColor(sf::Color::Yellow); // Color for visibility
+
+    // Obstacle movement speed
+    float obstacleSpeed = 5.0f; // Speed of movement
+
+
+    // Player 1 Controls
+    sf::Text controlsMoveP1, controlsJumpP1, controlsBoostP1, controlsKickP1, controlsDashP1;
+    controlsMoveP1.setFont(font);
+    controlsMoveP1.setCharacterSize(30);
+    controlsMoveP1.setFillColor(sf::Color::White);
+    controlsMoveP1.setOutlineColor(sf::Color::Black);
+    controlsMoveP1.setOutlineThickness(2.0f);
+    controlsMoveP1.setString("Move: <A, D>");
+    controlsMoveP1.setPosition(50, 100);
+
+    controlsJumpP1.setFont(font);
+    controlsJumpP1.setCharacterSize(30);
+    controlsJumpP1.setFillColor(sf::Color::White);
+    controlsJumpP1.setOutlineColor(sf::Color::Black);
+    controlsJumpP1.setOutlineThickness(2.0f);
+    controlsJumpP1.setString("Jump: <W>");
+    controlsJumpP1.setPosition(50, 140);
+
+    controlsBoostP1.setFont(font);
+    controlsBoostP1.setCharacterSize(30);
+    controlsBoostP1.setFillColor(sf::Color::White);
+    controlsBoostP1.setOutlineColor(sf::Color::Black);
+    controlsBoostP1.setOutlineThickness(2.0f);
+    controlsBoostP1.setString("Boost: <G>");
+    controlsBoostP1.setPosition(50, 180);
+
+    controlsKickP1.setFont(font);
+    controlsKickP1.setCharacterSize(30);
+    controlsKickP1.setFillColor(sf::Color::White);
+    controlsKickP1.setOutlineColor(sf::Color::Black);
+    controlsKickP1.setOutlineThickness(2.0f);
+    controlsKickP1.setString("Kick: <B>");
+    controlsKickP1.setPosition(50, 220);
+
+    controlsDashP1.setFont(font);
+    controlsDashP1.setCharacterSize(30);
+    controlsDashP1.setFillColor(sf::Color::White);
+    controlsDashP1.setOutlineColor(sf::Color::Black);
+    controlsDashP1.setOutlineThickness(2.0f);
+    controlsDashP1.setString("Dash: <V>");
+    controlsDashP1.setPosition(50, 260);
+
+    // Player 2 Controls
+    sf::Text controlsMoveP2, controlsJumpP2, controlsBoostP2, controlsKickP2, controlsDashP2;
+    controlsMoveP2.setFont(font);
+    controlsMoveP2.setCharacterSize(30);
+    controlsMoveP2.setFillColor(sf::Color::White);
+    controlsMoveP2.setOutlineColor(sf::Color::Black);
+    controlsMoveP2.setOutlineThickness(2.0f);
+    controlsMoveP2.setString("Move: <Left, Right>");
+    controlsMoveP2.setPosition(1600, 100);
+
+    controlsJumpP2.setFont(font);
+    controlsJumpP2.setCharacterSize(30);
+    controlsJumpP2.setFillColor(sf::Color::White);
+    controlsJumpP2.setOutlineColor(sf::Color::Black);
+    controlsJumpP2.setOutlineThickness(2.0f);
+    controlsJumpP2.setString("Jump: <Up>");
+    controlsJumpP2.setPosition(1600, 140);
+
+    controlsBoostP2.setFont(font);
+    controlsBoostP2.setCharacterSize(30);
+    controlsBoostP2.setFillColor(sf::Color::White);
+    controlsBoostP2.setOutlineColor(sf::Color::Black);
+    controlsBoostP2.setOutlineThickness(2.0f);
+    controlsBoostP2.setString("Boost: <L>");
+    controlsBoostP2.setPosition(1600, 180);
+
+    controlsKickP2.setFont(font);
+    controlsKickP2.setCharacterSize(30);
+    controlsKickP2.setFillColor(sf::Color::White);
+    controlsKickP2.setOutlineColor(sf::Color::Black);
+    controlsKickP2.setOutlineThickness(2.0f);
+    controlsKickP2.setString("Kick: <P>");
+    controlsKickP2.setPosition(1600, 220);
+
+    controlsDashP2.setFont(font);
+    controlsDashP2.setCharacterSize(30);
+    controlsDashP2.setFillColor(sf::Color::White);
+    controlsDashP2.setOutlineColor(sf::Color::Black);
+    controlsDashP2.setOutlineThickness(2.0f);
+    controlsDashP2.setString("Dash: <O>");
+    controlsDashP2.setPosition(1600, 260);
+
+
+    sf::Text controlsFullscreen;
+    controlsFullscreen.setFont(font);
+    controlsFullscreen.setCharacterSize(30);
+    controlsFullscreen.setFillColor(sf::Color::White);
+    controlsFullscreen.setOutlineColor(sf::Color::Black);
+    controlsFullscreen.setOutlineThickness(2.0f);
+    controlsFullscreen.setString("Fullscreen Toggle: <F11>");
+    controlsFullscreen.setPosition(50, 300); // Adjust position
+
+
     // ---------------- Main Game Loop ----------------
     while (window.isOpen()) {
         sf::Event event;
         while (window.pollEvent(event)) {
-            if (event.type == sf::Event::Closed)
-                window.close();
+
+            // Handle fullscreen toggle
+            if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::F11) {
+                toggleFullscreen(window, isFullscreen); // Toggle between fullscreen and windowed mode
+            }
+
+            // ---------------- Enums and State ----------------
+            if (currentGameState == MainMenu) {
+                if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
+                    sf::Vector2i mousePos = sf::Mouse::getPosition(window);
+
+                    whistleSound.stop();
+                    victorySound.stop();
+
+                    bgMusicSound.stop();
+                    lowCheerSound.stop();
+
+                    if (startText.getGlobalBounds().contains(static_cast<float>(mousePos.x), static_cast<float>(mousePos.y))) {
+                        // Reset timer and score
+                        scorePlayer1 = 0;
+                        scorePlayer2 = 0;
+                        gameClock.restart();
+                        scoreboardText.setString("Player 1: 0  -  Player 2: 0  |  Time: 2:00");
+                        scoreboardText.setPosition(960 - scoreboardText.getGlobalBounds().width / 2, 20);
+
+                        if (bgMusicSound.getStatus() != sf::Sound::Playing) {
+                            bgMusicSound.play(); // Play and loop background music
+                        }
+                        if (lowCheerSound.getStatus() != sf::Sound::Playing) {
+                            lowCheerSound.play(); // Play and loop low cheering sound
+                        }
+
+                        whistleSound.play(); // Play the whistle sound
+
+                        currentGameState = Playing;
+                    }
+                    else if (settingsText.getGlobalBounds().contains(static_cast<float>(mousePos.x), static_cast<float>(mousePos.y))) {
+                        currentGameState = Settings;
+                    }
+                    else if (quitText.getGlobalBounds().contains(static_cast<float>(mousePos.x), static_cast<float>(mousePos.y))) {
+                        window.close();
+                    }
+                }
+            }
+            else if (currentGameState == Settings) {
+                if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
+                    if (currentGameState == Settings) {
+                        sf::Vector2u currentResolution = window.getSize(); // Get the current window resolution
+                        resolutionText.setString(std::to_string(currentResolution.x) + " x " + std::to_string(currentResolution.y));
+                    }
+
+                    sf::Vector2i mousePos = sf::Mouse::getPosition(window);
+
+                    // Navigate resolutions
+                    if (resolutionLeftArrow.getGlobalBounds().contains(static_cast<float>(mousePos.x), static_cast<float>(mousePos.y))) {
+                        currentResolutionIndex = (currentResolutionIndex - 1 + resolutions.size()) % resolutions.size(); // Loop back if needed
+                    }
+                    else if (resolutionRightArrow.getGlobalBounds().contains(static_cast<float>(mousePos.x), static_cast<float>(mousePos.y))) {
+                        currentResolutionIndex = (currentResolutionIndex + 1) % resolutions.size(); // Loop forward if needed
+                    }
+
+                    // Apply resolution
+                    if (applyButton.getGlobalBounds().contains(static_cast<float>(mousePos.x), static_cast<float>(mousePos.y))) {
+                        // Get the selected resolution
+                        sf::Vector2u selectedResolution = resolutions[currentResolutionIndex];
+
+                        // Create the window with the new resolution
+                        window.create(sf::VideoMode(selectedResolution.x, selectedResolution.y), "Celestial Cup", sf::Style::Close | sf::Style::Resize);
+
+                        // Reset the view to match the new resolution
+                        sf::View newView(sf::FloatRect(0, 0, static_cast<float>(selectedResolution.x), static_cast<float>(selectedResolution.y)));
+                        window.setView(newView);
+                    }
+
+                    // Back to Main Menu
+                    if (backButton.getGlobalBounds().contains(static_cast<float>(mousePos.x), static_cast<float>(mousePos.y))) {
+                        currentGameState = MainMenu; // Return to main menu
+                    }
+                }
+            }
+
+            if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Escape) {
+                isPaused = !isPaused; // Toggle pause state
+            }
+
+        }
+
+        // Pause Menu Logic
+        if (isPaused) {
+            window.clear(sf::Color(0, 0, 0));
+            window.draw(resumeButton);
+            window.draw(pausemainMenuButton);
+            window.display();
+
+            if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
+                sf::Vector2i mousePos = sf::Mouse::getPosition(window);
+
+                // Resume Button
+                if (resumeButton.getGlobalBounds().contains(static_cast<float>(mousePos.x), static_cast<float>(mousePos.y))) {
+                    isPaused = false;
+                }
+
+                // Main Menu Button
+                if (pausemainMenuButton.getGlobalBounds().contains(static_cast<float>(mousePos.x), static_cast<float>(mousePos.y))) {
+                    currentGameState = MainMenu;
+                    isPaused = false;
+                }
+            }
+
+            continue; // Skip the rest of the game loop when paused
         }
 
         if (!isResetting) {
             // ---------------- Player Movement ----------------
             // Player 1 Movement (WAD)
-            if (sf::Keyboard::isKeyPressed(sf::Keyboard::A) && player1.getPosition().x > 0)
-                player1.move(-5.0f, 0); // Move left
-            if (sf::Keyboard::isKeyPressed(sf::Keyboard::D) && player1.getPosition().x + player1.getSize().x < 1920)
-                player1.move(5.0f, 0); // Move right
-            if (sf::Keyboard::isKeyPressed(sf::Keyboard::W) && player1OnGround) {
-                player1VelocityY = jumpStrength; // Jump
-                player1OnGround = false;
+            // Player 1 Speed Boost (Key: G)
+            // Speed Boost Activation (Key: G)
+            if (sf::Keyboard::isKeyPressed(sf::Keyboard::G) && player1SpeedBoostTimer.getElapsedTime().asSeconds() > 15.0f && !player1SpeedBoost) {
+                player1SpeedBoost = true;
+                player1SpeedBoostTimer.restart();
+                player1CanDoubleJump = true; // Enable double jump when speed boost is activated
             }
+
+            // Deactivate Speed Boost after 3 seconds
+            if (player1SpeedBoost && player1SpeedBoostTimer.getElapsedTime().asSeconds() > 3.0f) {
+                player1SpeedBoost = false;
+                player1CanDoubleJump = false; // Disable double jump after speed boost ends
+            }
+
+            // Update Player 1's movement speed
+            float player1CurrentSpeed = player1SpeedBoost ? 10.0f : 5.0f;
+
+
+            // Player 1 Movement with updated speed
+            if (sf::Keyboard::isKeyPressed(sf::Keyboard::A) && player1.getPosition().x > 0)
+                player1.move(-player1CurrentSpeed, 0);
+            if (sf::Keyboard::isKeyPressed(sf::Keyboard::D) && player1.getPosition().x + player1.getSize().x < 1920)
+                player1.move(player1CurrentSpeed, 0);
+
+            // Update cooldown text
+            player1SpeedBoostText.setString("Speed Boost: " + std::to_string((int)std::max(0.0f, 15.0f - player1SpeedBoostTimer.getElapsedTime().asSeconds())) + "s");
+
+            // Player 1 Jump Logic (W Key)
+            if (sf::Keyboard::isKeyPressed(sf::Keyboard::W)) {
+                if (player1OnGround) {
+                    player1VelocityY = jumpStrength; // Regular jump
+                    player1OnGround = false;
+                }
+                else if (player1CanDoubleJump) {
+                    player1VelocityY = jumpStrength; // Double jump
+                    player1CanDoubleJump = false;    // Disable double jump after use
+                }
+            }
+
 
             // Player 2 Movement (Arrow Keys)
             if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left) && player2.getPosition().x > 0)
@@ -172,7 +709,13 @@ int main() {
                 player1.setPosition(player1.getPosition().x, 880 - player1.getSize().y);
                 player1VelocityY = 0.0f;
                 player1OnGround = true;
+
+                // Reset double jump if speed boost is active
+                if (player1SpeedBoost) {
+                    player1CanDoubleJump = true;
+                }
             }
+
 
             if (player2.getPosition().y + player2.getSize().y >= 880) {
                 player2.setPosition(player2.getPosition().x, 880 - player2.getSize().y);
@@ -197,6 +740,7 @@ int main() {
                     ballVelocity.x = 0.0f;
                 }
             }
+
 
 
             // Ball Collision with walls
@@ -229,27 +773,152 @@ int main() {
             sf::FloatRect player1FootBounds = player1Foot.getGlobalBounds();
             sf::FloatRect player2FootBounds = player2Foot.getGlobalBounds();
 
+            // Handle collision with Player 1's body
+            if (ballBounds.intersects(player1Bounds)) {
+                if (ball.getPosition().x < player1.getPosition().x + player1.getSize().x / 2) {
+                    // Ball is on the left side, push it to the left
+                    ball.setPosition(player1.getPosition().x - ball.getRadius() * 2, ball.getPosition().y);
+                    ballVelocity.x = -std::abs(ballVelocity.x); // Ensure it moves to the left
+                }
+                else {
+                    // Ball is on the right side, push it to the right
+                    ball.setPosition(player1.getPosition().x + player1.getSize().x, ball.getPosition().y);
+                    ballVelocity.x = std::abs(ballVelocity.x); // Ensure it moves to the right
+                }
+                ballVelocity.y *= 0.7f; // Dampen vertical velocity slightly
+            }
+
+            // Handle collision with Player 2's body
+            if (ballBounds.intersects(player2Bounds)) {
+                if (ball.getPosition().x < player2.getPosition().x + player2.getSize().x / 2) {
+                    // Ball is on the left side, push it to the left
+                    ball.setPosition(player2.getPosition().x - ball.getRadius() * 2, ball.getPosition().y);
+                    ballVelocity.x = -std::abs(ballVelocity.x); // Ensure it moves to the left
+                }
+                else {
+                    // Ball is on the right side, push it to the right
+                    ball.setPosition(player2.getPosition().x + player2.getSize().x, ball.getPosition().y);
+                    ballVelocity.x = std::abs(ballVelocity.x); // Ensure it moves to the right
+                }
+                ballVelocity.y *= 0.7f; // Dampen vertical velocity slightly
+            }
+
+            // Handle collision with Player 1's foot during swing
             if (player1FootBounds.intersects(ballBounds) && player1Swinging) {
                 ballVelocity.x = 15.0f * std::cos(player1FootAngle * 3.14f / 180.0f); // Apply horizontal force
                 ballVelocity.y = -10.0f; // Apply vertical force
+                ball.setPosition(player1Foot.getPosition().x, player1Foot.getPosition().y - ball.getRadius() * 2); // Position above foot
             }
 
+            // Handle collision with Player 2's foot during swing
             if (player2FootBounds.intersects(ballBounds) && player2Swinging) {
                 ballVelocity.x = -15.0f * std::cos(player2FootAngle * 3.14f / 180.0f); // Apply horizontal force
                 ballVelocity.y = -10.0f; // Apply vertical force
+                ball.setPosition(player2Foot.getPosition().x, player2Foot.getPosition().y - ball.getRadius() * 2); // Position above foot
             }
 
 
-            // Prevent players from moving through each other
-            if (ballBounds.intersects(player1Bounds)) {
-                ballVelocity.x = 8.0f; // Push ball to the right
-                ballVelocity.y = jumpStrength / 2; // Add slight upward force
+            // Move the obstacle back and forth
+            if (obstacle.getPosition().x >= 1800 || obstacle.getPosition().x <= 100) {
+                obstacleSpeed = -obstacleSpeed; // Reverse direction when hitting boundaries
+            }
+            obstacle.move(obstacleSpeed, 0); // Move the obstacle horizontally
+
+            // Check collision between ball and obstacle
+            if (ball.getGlobalBounds().intersects(obstacle.getGlobalBounds())) {
+                // Determine collision side
+                if (ball.getPosition().y + ball.getRadius() * 2 < obstacle.getPosition().y + 10) {
+                    // Ball hits the top of the obstacle
+                    ballVelocity.y *= -1; // Reverse vertical velocity
+                }
+                else if (ball.getPosition().y > obstacle.getPosition().y + obstacle.getSize().y - 10) {
+                    // Ball hits the bottom of the obstacle
+                    ballVelocity.y *= -1; // Reverse vertical velocity
+                }
+                else {
+                    // Ball hits the sides of the obstacle
+                    ballVelocity.x *= -1; // Reverse horizontal velocity
+                }
             }
 
-            if (ballBounds.intersects(player2Bounds)) {
-                ballVelocity.x = -8.0f; // Push ball to the left
-                ballVelocity.y = jumpStrength / 2; // Add slight upward force
+
+
+
+            // Game Timer Logic
+            float timeRemaining = gameDuration - gameClock.getElapsedTime().asSeconds();
+
+            if (!isGameOver) {
+                // Check if a player scores 5 goals
+                if (scorePlayer1 >= 5) {
+                    winnerText = "Player 1 Wins!";
+                    isGameOver = true;
+                }
+                else if (scorePlayer2 >= 5) {
+                    winnerText = "Player 2 Wins!";
+                    isGameOver = true;
+                }
+
+                // Check if the timer runs out
+                if (timeRemaining <= 0) {
+                    if (scorePlayer1 > scorePlayer2) {
+                        winnerText = "Player 1 Wins!";
+                    }
+                    else if (scorePlayer2 > scorePlayer1) {
+                        winnerText = "Player 2 Wins!";
+                    }
+                    else {
+                        winnerText = "It's a Tie!";
+                    }
+                    isGameOver = true;
+                }
+
+                // Update the scoreboard with the timer
+                int minutes = static_cast<int>(timeRemaining) / 60;
+                int seconds = static_cast<int>(timeRemaining) % 60;
+                scoreboardText.setString(
+                    "Player 1: " + std::to_string(scorePlayer1) +
+                    "  -  Player 2: " + std::to_string(scorePlayer2) +
+                    "  |  Time: " + std::to_string(minutes) + ":" + (seconds < 10 ? "0" : "") + std::to_string(seconds)
+                );
+                scoreboardText.setPosition(960 - scoreboardText.getGlobalBounds().width / 2, 20); // Center
             }
+
+            if (isGameOver) {
+                victoryText.setString(winnerText);
+                victoryText.setPosition(960 - victoryText.getGlobalBounds().width / 2, 540 - victoryText.getGlobalBounds().height / 2); // Center Victory Text
+
+                // Check if 5 seconds have passed
+                if (gameClock.getElapsedTime().asSeconds() > gameDuration + 5.0f) {
+                    // Automatically return to Main Menu after 5 seconds
+                    currentGameState = MainMenu;
+                    isGameOver = false;
+                    gameClock.restart();
+                    scorePlayer1 = 0;
+                    scorePlayer2 = 0;
+
+                    // Reset scoreboard
+                    scoreboardText.setString("Player 1: 0  -  Player 2: 0  |  Time: 2:00");
+                    scoreboardText.setPosition(960 - scoreboardText.getGlobalBounds().width / 2, 20);
+                }
+
+                // Handle "Main Menu" button click
+                if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
+                    sf::Vector2i mousePos = sf::Mouse::getPosition(window);
+                    if (mainMenuButton.getGlobalBounds().contains(static_cast<float>(mousePos.x), static_cast<float>(mousePos.y))) {
+                        // Reset the game state and return to the main menu
+                        currentGameState = MainMenu;
+                        isGameOver = false;
+                        gameClock.restart();
+                        scorePlayer1 = 0;
+                        scorePlayer2 = 0;
+
+                        // Reset scoreboard
+                        scoreboardText.setString("Player 1: 0  -  Player 2: 0  |  Time: 2:00");
+                        scoreboardText.setPosition(960 - scoreboardText.getGlobalBounds().width / 2, 20);
+                    }
+                }
+            }
+
 
 
             // ---------------- Dash Mechanics ----------------
@@ -299,6 +968,33 @@ int main() {
                 }
             }
 
+
+            // Player 2 Giant Juice (Key: L)
+            if (sf::Keyboard::isKeyPressed(sf::Keyboard::L) && player2GiantJuiceTimer.getElapsedTime().asSeconds() > 15.0f && !player2GiantJuice) {
+                player2GiantJuice = true;
+                player2GiantJuiceTimer.restart();
+
+                // Update Player 2 size
+                player2.setSize(sf::Vector2f(200.0f, 400.0f)); // Bigger size for noticeable effect
+                player2.setPosition(player2.getPosition().x, player2.getPosition().y - 275.0f); // Adjust position to prevent sinking into the ground
+
+                // Update Player 2 sprite scale
+                player2Sprite.setScale(3.0f, 3.0f); // Enlarge the sprite
+            }
+
+            // Revert size after 4 seconds
+            if (player2GiantJuice && player2GiantJuiceTimer.getElapsedTime().asSeconds() > 3.0f) {
+                player2.setSize(sf::Vector2f(65.0f, 125.0f)); // Revert to original size
+                player2GiantJuice = false;
+
+                // Reset Player 2 sprite scale
+                player2Sprite.setScale(1.0f, 1.0f); // Reset to normal size
+            }
+
+
+
+            // Update cooldown text
+            player2GiantJuiceText.setString("Giant Juice: " + std::to_string((int)std::max(0.0f, 15.0f - player2GiantJuiceTimer.getElapsedTime().asSeconds())) + "s");
 
             // ---------------- Swing Mechanics ----------------
             // Swing Player 1 Foot (B Key)
@@ -370,6 +1066,13 @@ int main() {
                 scorePlayer2++; // Player 2 scores
                 isResetting = true;
                 resetClock.restart();
+
+                // Play victory music
+                victorySound.play();
+
+                // Update scoreboard text
+                scoreboardText.setString("Player 1: " + std::to_string(scorePlayer1) + "  -  Player 2: " + std::to_string(scorePlayer2));
+                scoreboardText.setPosition(960 - scoreboardText.getGlobalBounds().width / 2, 20); // Re-center after update
             }
 
             // Check if the ball enters the right goal
@@ -379,9 +1082,16 @@ int main() {
                 scorePlayer1++; // Player 1 scores
                 isResetting = true;
                 resetClock.restart();
-            }
 
+                // Play victory music
+                victorySound.play();
+
+                // Update scoreboard text
+                scoreboardText.setString("Player 1: " + std::to_string(scorePlayer1) + "  -  Player 2: " + std::to_string(scorePlayer2));
+                scoreboardText.setPosition(960 - scoreboardText.getGlobalBounds().width / 2, 20); // Re-center after update
+            }
         }
+
         else {
             // ---------------- Reset State ----------------
             if (resetClock.getElapsedTime().asSeconds() >= 3) {
@@ -394,26 +1104,112 @@ int main() {
         }
 
         // ---------------- Rendering ----------------
-        window.draw(backgroundSprite); // Draw background
-        leftGoalSprite.setPosition(leftGoal.getPosition()); // Sync sprite with physics object
-        window.draw(leftGoalSprite);
-        rightGoalSprite.setPosition(rightGoal.getPosition()); // Sync sprite with physics object
-        window.draw(rightGoalSprite);
-        ballSprite.setPosition(ball.getPosition()); // Sync sprite with physics object
-        window.draw(ballSprite)
-            ;
-        player1Sprite.setPosition(player1.getPosition());
-        window.draw(player1Sprite);
+        window.clear();
 
-        player2Sprite.setPosition(player2.getPosition());
-        window.draw(player2Sprite);
+        // Check the current game state and render accordingly
+        if (currentGameState == MainMenu) {
+            // Render Main Menu
+            window.draw(mainMenuBg); // Draw the background
+            window.draw(titleText);  // Draw the title
+            window.draw(startBox);   // Draw the box for "Start Game"
+            window.draw(startText);  // Draw the text for "Start Game"
+            window.draw(settingsBox); // Draw the box for "Settings"
+            window.draw(settingsText); // Draw the text for "Settings"
+            window.draw(quitBox);    // Draw the box for "Quit"
+            window.draw(quitText);   // Draw the text for "Quit"
 
-        player1FootSprite.setPosition(player1Foot.getPosition());
-        window.draw(player1FootSprite);
+        }
+        else if (currentGameState == Playing) {
+            // Render Game Scene
 
-        player2FootSprite.setPosition(player2Foot.getPosition());
-        window.draw(player2FootSprite);
+            // Draw the background
+            window.draw(backgroundSprite);
 
+            // Sync goal sprites with their respective positions
+            leftGoalSprite.setPosition(leftGoal.getPosition());
+            rightGoalSprite.setPosition(rightGoal.getPosition());
+
+            // Draw goals
+            window.draw(leftGoalSprite);
+            window.draw(rightGoalSprite);
+
+            window.draw(obstacle); // Draw the obstacle
+
+            // Render fullscreen toggle info
+            window.draw(controlsFullscreen);
+
+            // Render Player 1 controls
+            window.draw(controlsMoveP1);
+            window.draw(controlsJumpP1);
+            window.draw(controlsBoostP1);
+            window.draw(controlsKickP1);
+            window.draw(controlsDashP1);
+
+            // Render Player 2 controls
+            window.draw(controlsMoveP2);
+            window.draw(controlsJumpP2);
+            window.draw(controlsBoostP2);
+            window.draw(controlsKickP2);
+            window.draw(controlsDashP2);
+
+
+            // Sync ball sprite with its position
+            ballSprite.setPosition(ball.getPosition());
+
+            // Draw the ball
+            window.draw(ballSprite);
+
+            player1Sprite.setPosition(player1.getPosition());
+            window.draw(player1Sprite);
+
+            player2Sprite.setPosition(player2.getPosition());
+            window.draw(player2Sprite);
+
+            player1FootSprite.setPosition(player1Foot.getPosition());
+            window.draw(player1FootSprite);
+
+            player2FootSprite.setPosition(player2Foot.getPosition());
+            window.draw(player2FootSprite);
+
+            window.draw(player1SpeedBoostText);
+            window.draw(player2GiantJuiceText);
+
+            if (!isGameOver) {
+                // Render the scoreboard
+                window.draw(scoreboardText);
+
+                if (!victorySound.getStatus() == sf::Sound::Playing) {
+                    victorySound.play(); // Play victory music
+                }
+            }
+            else {
+                // Render the victory screen
+                window.draw(victoryText);
+                // Render Main Menu Button
+                window.draw(mainMenuButton);
+                window.draw(mainMenuButtonText);
+
+            }
+
+        }
+
+        else if (currentGameState == Settings) {
+
+            // Update resolution text
+            sf::Vector2u currentResolution = resolutions[currentResolutionIndex];
+            resolutionText.setString(std::to_string(currentResolution.x) + " x " + std::to_string(currentResolution.y));
+
+            // Render UI elements
+            window.draw(resolutionLeftArrow);
+            window.draw(resolutionText);
+            window.draw(resolutionRightArrow);
+            window.draw(applyButton);
+
+            window.draw(backButton);
+        }
+
+
+        // Display the rendered frame
         window.display();
     }
 
