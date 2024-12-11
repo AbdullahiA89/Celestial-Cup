@@ -27,7 +27,7 @@ add_custom_target(copy_resources ALL
 file(GLOB_RECURSE SOURCES sourcecode/*.cpp sourcecode/*.h)
 add_executable(SOURCECODE ${SOURCES})
 target_include_directories(SOURCECODE PRIVATE ${SFML_INCS})
-target_link_libraries(SOURCECODE PRIVATE sfml-graphics sfml-window sfml-system)
+target_link_libraries(SOURCECODE PRIVATE sfml-graphics sfml-window sfml-audio sfml-system)
 
 # Ensure resources are copied for runtime
 add_dependencies(SOURCECODE copy_resources)
