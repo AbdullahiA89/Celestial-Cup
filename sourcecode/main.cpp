@@ -11,7 +11,7 @@ enum GameState {
     MainMenu,
     Playing
 };
-=======
+
 #include <SFML/Audio.hpp>
 #include <vector>
 #include <iostream>
