@@ -2,7 +2,6 @@
 #include <SFML/Graphics.hpp>
 #include <SFML/Window.hpp>
 #include <SFML/System.hpp>
-#include <SFML/Audio.hpp>
 #include <vector>
 #include <iostream>
 #include <cmath> 
@@ -60,7 +59,7 @@ int main() {
     sf::Sprite mainMenuBg(mainMenuBgTexture);
     // Load Font
     sf::Font font;
-    if (!font.loadFromFile("bin/debug/res/font/Pixelify_Sans/PixelifySans-VariableFont_wght.ttf")) {
+    if (!font.loadFromFile("bin/debug/res/Pixelify_Sans/PixelifySans-VariableFont_wght.ttf")) {
         std::cerr << "Failed to load font!" << std::endl;
         return -1;
     }
@@ -270,42 +269,7 @@ int main() {
     // Set background position
     backgroundSprite.setPosition(0.0f, 0.0f); // Fullscreen background
 
-    // Background music
-    sf::SoundBuffer bgMusicBuffer;
-    if (!bgMusicBuffer.loadFromFile("bin/debug/res/bgmusic.wav")) {
-        std::cerr << "Failed to load background music!" << std::endl;
-        return -1;
-    }
-    sf::Sound bgMusicSound(bgMusicBuffer);
-    bgMusicSound.setLoop(true); // Loop the background music
-    bgMusicSound.setVolume(50); // Adjust volume
-
-    // Low cheering sound
-    sf::SoundBuffer lowCheerBuffer;
-    if (!lowCheerBuffer.loadFromFile("bin/debug/res/lowcheer.wav")) {
-        std::cerr << "Failed to load low cheering sound!" << std::endl;
-        return -1;
-    }
-    sf::Sound lowCheerSound(lowCheerBuffer);
-    lowCheerSound.setLoop(true); // Loop the cheering sound
-    lowCheerSound.setVolume(30); // Adjust volume
-
-
-    // Whistle sound
-    sf::SoundBuffer whistleBuffer;
-    if (!whistleBuffer.loadFromFile("bin/debug/res/whistle sound game.wav")) {
-        std::cerr << "Failed to load whistle sound!" << std::endl;
-        return -1;
-    }
-    sf::Sound whistleSound(whistleBuffer);
-
-    // Victory music
-    sf::SoundBuffer victoryBuffer;
-    if (!victoryBuffer.loadFromFile("bin/debug/res/victorymusic.wav")) {
-        std::cerr << "Failed to load victory music!" << std::endl;
-        return -1;
-    }
-    sf::Sound victorySound(victoryBuffer);
+   
 
 
     sf::Text scoreboardText;
@@ -542,11 +506,7 @@ int main() {
                 if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
                     sf::Vector2i mousePos = sf::Mouse::getPosition(window);
 
-                    whistleSound.stop();
-                    victorySound.stop();
-
-                    bgMusicSound.stop();
-                    lowCheerSound.stop();
+                   
 
                     if (startText.getGlobalBounds().contains(static_cast<float>(mousePos.x), static_cast<float>(mousePos.y))) {
                         // Reset timer and score
@@ -556,14 +516,7 @@ int main() {
                         scoreboardText.setString("Player 1: 0  -  Player 2: 0  |  Time: 2:00");
                         scoreboardText.setPosition(960 - scoreboardText.getGlobalBounds().width / 2, 20);
 
-                        if (bgMusicSound.getStatus() != sf::Sound::Playing) {
-                            bgMusicSound.play(); // Play and loop background music
-                        }
-                        if (lowCheerSound.getStatus() != sf::Sound::Playing) {
-                            lowCheerSound.play(); // Play and loop low cheering sound
-                        }
-
-                        whistleSound.play(); // Play the whistle sound
+                       
 
                         currentGameState = Playing;
                     }
@@ -1068,7 +1021,7 @@ int main() {
                 resetClock.restart();
 
                 // Play victory music
-                victorySound.play();
+               
 
                 // Update scoreboard text
                 scoreboardText.setString("Player 1: " + std::to_string(scorePlayer1) + "  -  Player 2: " + std::to_string(scorePlayer2));
@@ -1084,7 +1037,7 @@ int main() {
                 resetClock.restart();
 
                 // Play victory music
-                victorySound.play();
+                
 
                 // Update scoreboard text
                 scoreboardText.setString("Player 1: " + std::to_string(scorePlayer1) + "  -  Player 2: " + std::to_string(scorePlayer2));
@@ -1178,9 +1131,7 @@ int main() {
                 // Render the scoreboard
                 window.draw(scoreboardText);
 
-                if (!victorySound.getStatus() == sf::Sound::Playing) {
-                    victorySound.play(); // Play victory music
-                }
+             
             }
             else {
                 // Render the victory screen
