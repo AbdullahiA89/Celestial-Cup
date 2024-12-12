@@ -7,6 +7,7 @@
 #include <cmath> 
 
 
+
 // ---------------- Main Function ----------------
 
 bool isFullscreen = false; // Tracks whether the game is in fullscreen mode
@@ -48,18 +49,26 @@ int main() {
     };
     GameState currentGameState = MainMenu;
 
+#ifdef _DEBUG
+    // Use the path for Debug mode when running from the IDE
+    std::string resourcePath = "bin/debug/res/";
+#else
+    // Use the path for standalone executable
+    std::string resourcePath = "res/";
+#endif
+
     // Load Main Menu Background
     sf::Texture mainMenuBgTexture;
 
     // ---------------- Resource Loading ----------------
-    if (!mainMenuBgTexture.loadFromFile("bin/debug/res/mainmenubg.png")) {
+    if (!mainMenuBgTexture.loadFromFile("C:/buildCCgame/bin/debug/res/mainmenubg.png")) {
         std::cerr << "Failed to load main menu background!" << std::endl;
         return -1;
     }
     sf::Sprite mainMenuBg(mainMenuBgTexture);
     // Load Font
     sf::Font font;
-    if (!font.loadFromFile("bin/debug/res/Pixelify_Sans/PixelifySans-VariableFont_wght.ttf")) {
+    if (!font.loadFromFile("C:/buildCCgame/bin/debug/res/Pixelify_Sans/PixelifySans-VariableFont_wght.ttf")) {
         std::cerr << "Failed to load font!" << std::endl;
         return -1;
     }
@@ -240,14 +249,14 @@ int main() {
     // ---------------- Load Textures ----------------
     // Load Textures
     sf::Texture backgroundTexture, ballTexture, leftGoalTexture, rightGoalTexture, player1Texture, player2Texture, player1FootTexture, player2FootTexture;
-    if (!backgroundTexture.loadFromFile("bin/debug/res/Spacefinal.png") ||
-        !ballTexture.loadFromFile("bin/debug/res/ball.png") ||
-        !leftGoalTexture.loadFromFile("bin/debug/res/leftgoalpost.png") ||
-        !rightGoalTexture.loadFromFile("bin/debug/res/rightgoalpost.png") ||
-        !player1Texture.loadFromFile("bin/debug/res/Player1.png") ||
-        !player2Texture.loadFromFile("bin/debug/res/Player2.png") ||
-        !player1FootTexture.loadFromFile("bin/debug/res/player1shoe.png") ||
-        !player2FootTexture.loadFromFile("bin/debug/res/player2shoe.png")) {
+    if (!backgroundTexture.loadFromFile("C:/buildCCgame/bin/debug/res/Spacefinal.png") ||
+        !ballTexture.loadFromFile("C:/buildCCgame/bin/debug/res/ball.png") ||
+        !leftGoalTexture.loadFromFile("C:/buildCCgame/bin/debug/res/leftgoalpost.png") ||
+        !rightGoalTexture.loadFromFile("C:/buildCCgame/bin/debug/res/rightgoalpost.png") ||
+        !player1Texture.loadFromFile("C:/buildCCgame/bin/debug/res/Player1.png") ||
+        !player2Texture.loadFromFile("C:/buildCCgame/bin/debug/res/Player2.png") ||
+        !player1FootTexture.loadFromFile("C:/buildCCgame/bin/debug/res/player1shoe.png") ||
+        !player2FootTexture.loadFromFile("C:/buildCCgame/bin/debug/res/player2shoe.png")) {
         std::cerr << "Failed to load one or more textures!" << std::endl;
         return -1;
     }
