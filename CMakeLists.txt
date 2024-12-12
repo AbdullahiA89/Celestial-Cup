@@ -31,3 +31,5 @@ target_link_libraries(SOURCECODE PRIVATE sfml-graphics sfml-window sfml-system)
 
 # Ensure resources are copied for runtime
 add_dependencies(SOURCECODE copy_resources)
+
+find_package(SFML REQUIRED COMPONENTS graphics window system network)  # Exclude audio
