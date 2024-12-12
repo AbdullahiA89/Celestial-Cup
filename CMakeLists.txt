@@ -33,3 +33,7 @@ target_link_libraries(SOURCECODE PRIVATE sfml-graphics sfml-window sfml-system)
 # Ensure resources are copied for runtime
 add_dependencies(SOURCECODE copy_resources)
 
+#set working directory to build dir
+set_target_properties(${exe} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY 
+  ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/$(Configuration)
+)
